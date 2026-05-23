@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Adaptive Productivity Assistant</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f4f6f8;
+            text-align: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            max-width: 700px;
+            margin: auto;
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+
+        input, select, button {
+            width: 85%;
+            padding: 12px;
+            margin: 10px;
+            border-radius: 8px;
+            border: 1px solid #ccc;
+        }
+
+        button {
+            background: black;
+            color: white;
+            cursor: pointer;
+        }
+
+        .task {
+            background: #eee;
+            padding: 10px;
+            margin: 8px;
+            border-radius: 8px;
+        }
+
+        .vault {
+            background: #fff3cd;
+        }
+
+        .current {
+            background: #d1ecf1;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>⚡ Adaptive Productivity Assistant</h1>
+    <p>Smart scheduling + anti-procrastination support</p>
+
+    <input type="text" id="taskName" placeholder="Enter task">
+
+    <select id="effort">
+        <option>High</option>
+        <option>Medium</option>
+        <option>Low</option>
+    </select>
+
+    <button onclick="addTask()">Add Task</button>
+
+    <h3>Current Energy Level</h3>
+    <select id="energy">
+        <option>High</option>
+        <option>Medium</option>
+        <option>Low</option>
+    </select>
+
+    <button onclick="scheduleTasks()">Arrange My Tasks</button>
+
+    <div id="taskList"></div>
+
+    <div id="currentTaskArea" style="display:none;">
+        <h2>Current Task</h2>
+        <div id="currentTask" class="task current"></div>
+
+        <button onclick="showProblemMenu()">I'm Struggling</button>
+    </div>
+
+    <div id="problemArea" style="display:none;">
+        <select id="problem">
+            <option>Select issue</option>
+            <option>Bored</option>
+            <option>New exciting idea</option>
+            <option>Stuck</option>
+            <option>Low energy</option>
+        </select>
+
+        <button onclick="solveProblem()">Get Help</button>
+    </div>
+
+    <div id="solution"></div>
+
+    <h2>💡 Idea Vault</h2>
+    <div id="ideaVault"></div>
+</div>
+
+<script>
+    let tasks = [];
+    let ideaVault = [];
+    let currentTaskIndex = 0;
+    let scheduledTasks = [];
+
+    function addTask() {
+        const name = document.getElementById("taskName").value;
+        const effort = document.getElementById("effort").value;
+
+        if(name.trim() === "") {
+            alert("Enter a task.");
+            return;
+        }
+
+        tasks.push({ name, effort });
+        document.getElementById("taskName").value = "";
+        alert("Task added!");
+    }
+
+    function scheduleTasks() {
+        const energy = document.getElementById("energy").value;
+
+        if(energy === "High") {
+            scheduledTasks = [
+                ...tasks.filter(t => t.effort === "High"),
+                ...tasks.filter(t => t.effort === "Medium"),
+                ...tasks.filter(t => t.effort === "Low")
+            ];
+        }
+
+        if(energy === "Medium") {
+            scheduledTasks = [
+                ...tasks.filter(t => t.effort === "Medium"),
+                ...tasks.filter(t => t.effort === "High"),
+                ...tasks.filter(t => t.effort === "Low")
+            ];
+        }
+
+        if(energy === "Low") {
+            scheduledTasks = [
+                ...tasks.filter(t => t.effort === "Low"),
+                ...tasks.filter(t => t.effort === "Medium"),
+                ...tasks.filter(t => t.effort === "High")
+            ];
+        }
+
+        renderTasks();
+        startCurrentTask();
+    }
+
+    function renderTasks() {
+        let html = "<h2>Scheduled Tasks</h2>";
+        scheduledTasks.forEach(task => {
+            html += `<div class="task">${task.name} (${task.effort})</div>`;
+        });
+        document.getElementById("taskList").innerHTML = html;
+    }
+
+    function startCurrentTask() {
+        if(scheduledTasks.length === 0) return;
+
+        document.getElementById("currentTaskArea").style.display = "block";
+        document.getElementById("currentTask").innerText =
+            scheduledTasks[currentTaskIndex].name;
+    }
+
+    function showProblemMenu() {
+        document.getElementById("problemArea").style.display = "block";
+    }
+
+    function solveProblem() {
+        const issue = document.getElementById("problem").value;
+        const solution = document.getElementById("solution");
+
+        if(issue === "Bored") {
+            solution.innerHTML =
+                "<div class='task'>⏳ Solution: Try a 10-minute challenge before switching.</div>";
+        }
+
+        else if(issue === "New exciting idea") {
+            const idea = prompt("Enter your idea:");
+            if(idea) {
+                ideaVault.push(idea);
+                updateVault();
+                solution.innerHTML =
+                    "<div class='task'>✅ Idea saved. Continue current task.</div>";
+            }
+        }
+
+        else if(issue === "Stuck") {
+            const step = prompt("What's one smaller next step?");
+            if(step) {
+                solution.innerHTML =
+                    `<div class='task'>➡️ Next small step: ${step}</div>`;
+            }
+        }
+
+        else if(issue === "Low energy") {
+            const easierTask = scheduledTasks.find(
+                t => t.effort === "Low" && t.name !== scheduledTasks[currentTaskIndex].name
+            );
+
+            if(easierTask) {
+                document.getElementById("currentTask").innerText = easierTask.name;
+                solution.innerHTML =
+                    "<div class='task'>😴 Energy low. Switched to easier task.</div>";
+            } else {
+                solution.innerHTML =
+                    "<div class='task'>No easier task available.</div>";
+            }
+        }
+    }
+
+    function updateVault() {
+        let html = "";
+        ideaVault.forEach(idea => {
+            html += `<div class="task vault">${idea}</div>`;
+        });
+        document.getElementById("ideaVault").innerHTML = html;
+    }
+</script>
+
+</body>
+</html>
