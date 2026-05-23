@@ -1,6 +1,8 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Adaptive Productivity Assistant</title>
     <style>
         body {
@@ -12,7 +14,7 @@
 
         .container {
             background: white;
-            max-width: 700px;
+            max-width: 750px;
             margin: auto;
             padding: 25px;
             border-radius: 15px;
@@ -25,12 +27,18 @@
             margin: 10px;
             border-radius: 8px;
             border: 1px solid #ccc;
+            font-size: 16px;
         }
 
         button {
             background: black;
             color: white;
             cursor: pointer;
+            border: none;
+        }
+
+        button:hover {
+            opacity: 0.9;
         }
 
         .task {
@@ -40,12 +48,23 @@
             border-radius: 8px;
         }
 
+        .current {
+            background: #d1ecf1;
+            font-weight: bold;
+        }
+
         .vault {
             background: #fff3cd;
         }
 
-        .current {
-            background: #d1ecf1;
+        .btn-row {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        h1 {
+            margin-bottom: 5px;
         }
     </style>
 </head>
@@ -53,23 +72,23 @@
 
 <div class="container">
     <h1>⚡ Adaptive Productivity Assistant</h1>
-    <p>Smart scheduling + anti-procrastination support</p>
+    <p>Energy-based smart task scheduling + anti-procrastination support</p>
 
     <input type="text" id="taskName" placeholder="Enter task">
 
     <select id="effort">
-        <option>High</option>
-        <option>Medium</option>
-        <option>Low</option>
+        <option value="High">High Effort</option>
+        <option value="Medium">Medium Effort</option>
+        <option value="Low">Low Effort</option>
     </select>
 
     <button onclick="addTask()">Add Task</button>
 
     <h3>Current Energy Level</h3>
     <select id="energy">
-        <option>High</option>
-        <option>Medium</option>
-        <option>Low</option>
+        <option value="High">High Energy</option>
+        <option value="Medium">Medium Energy</option>
+        <option value="Low">Low Energy</option>
     </select>
 
     <button onclick="scheduleTasks()">Arrange My Tasks</button>
@@ -80,18 +99,20 @@
         <h2>Current Task</h2>
         <div id="currentTask" class="task current"></div>
 
-        <button onclick="showProblemMenu()">I'm Struggling</button>
-        <button onclick="completeTask()">✅ Complete Task</button>
-        <button onclick="nextTask()">⏭ Next Task</button>
+        <div class="btn-row">
+            <button onclick="showProblemMenu()">I'm Struggling</button>
+            <button onclick="completeTask()">✅ Mark Task Completed</button>
+            <button onclick="nextTask()">⏭ Move to Next Task</button>
+        </div>
     </div>
 
     <div id="problemArea" style="display:none;">
         <select id="problem">
-            <option>Select issue</option>
-            <option>Bored</option>
-            <option>New exciting idea</option>
-            <option>Stuck</option>
-            <option>Low energy</option>
+            <option value="">Select issue</option>
+            <option value="Bored">Bored</option>
+            <option value="New exciting idea">New exciting idea</option>
+            <option value="Stuck">Stuck</option>
+            <option value="Low energy">Low energy</option>
         </select>
 
         <button onclick="solveProblem()">Get Help</button>
@@ -105,16 +126,16 @@
 
 <script>
     let tasks = [];
+    let scheduledTasks = [];
     let ideaVault = [];
     let currentTaskIndex = 0;
-    let scheduledTasks = [];
 
     function addTask() {
-        const name = document.getElementById("taskName").value;
+        const name = document.getElementById("taskName").value.trim();
         const effort = document.getElementById("effort").value;
 
-        if(name.trim() === "") {
-            alert("Enter a task.");
+        if (!name) {
+            alert("Please enter a task.");
             return;
         }
 
@@ -126,23 +147,26 @@
     function scheduleTasks() {
         const energy = document.getElementById("energy").value;
 
-        if(energy === "High") {
+        if (tasks.length === 0) {
+            alert("Add tasks first.");
+            return;
+        }
+
+        currentTaskIndex = 0;
+
+        if (energy === "High") {
             scheduledTasks = [
                 ...tasks.filter(t => t.effort === "High"),
                 ...tasks.filter(t => t.effort === "Medium"),
                 ...tasks.filter(t => t.effort === "Low")
             ];
-        }
-
-        if(energy === "Medium") {
+        } else if (energy === "Medium") {
             scheduledTasks = [
                 ...tasks.filter(t => t.effort === "Medium"),
                 ...tasks.filter(t => t.effort === "High"),
                 ...tasks.filter(t => t.effort === "Low")
             ];
-        }
-
-        if(energy === "Low") {
+        } else {
             scheduledTasks = [
                 ...tasks.filter(t => t.effort === "Low"),
                 ...tasks.filter(t => t.effort === "Medium"),
@@ -151,23 +175,56 @@
         }
 
         renderTasks();
-        startCurrentTask();
+        updateCurrentTask();
+        document.getElementById("currentTaskArea").style.display = "block";
     }
 
     function renderTasks() {
         let html = "<h2>Scheduled Tasks</h2>";
-        scheduledTasks.forEach(task => {
-            html += `<div class="task">${task.name} (${task.effort})</div>`;
+
+        scheduledTasks.forEach((task, index) => {
+            let marker = index === currentTaskIndex ? "➡️ " : "";
+            html += `<div class="task">${marker}${task.name} (${task.effort})</div>`;
         });
+
         document.getElementById("taskList").innerHTML = html;
     }
 
-    function startCurrentTask() {
-        if(scheduledTasks.length === 0) return;
+    function updateCurrentTask() {
+        if (scheduledTasks.length === 0) {
+            document.getElementById("currentTask").innerText = "🎉 All tasks completed!";
+            document.getElementById("currentTaskArea").style.display = "none";
+            return;
+        }
 
-        document.getElementById("currentTaskArea").style.display = "block";
         document.getElementById("currentTask").innerText =
             scheduledTasks[currentTaskIndex].name;
+    }
+
+    function nextTask() {
+        if (scheduledTasks.length === 0) return;
+
+        currentTaskIndex++;
+
+        if (currentTaskIndex >= scheduledTasks.length) {
+            currentTaskIndex = 0;
+        }
+
+        updateCurrentTask();
+        renderTasks();
+    }
+
+    function completeTask() {
+        if (scheduledTasks.length === 0) return;
+
+        scheduledTasks.splice(currentTaskIndex, 1);
+
+        if (currentTaskIndex >= scheduledTasks.length) {
+            currentTaskIndex = 0;
+        }
+
+        updateCurrentTask();
+        renderTasks();
     }
 
     function showProblemMenu() {
@@ -178,14 +235,14 @@
         const issue = document.getElementById("problem").value;
         const solution = document.getElementById("solution");
 
-        if(issue === "Bored") {
+        if (issue === "Bored") {
             solution.innerHTML =
-                "<div class='task'>⏳ Solution: Try a 10-minute challenge before switching.</div>";
+                "<div class='task'>⏳ Try a 10-minute challenge before switching.</div>";
         }
 
-        else if(issue === "New exciting idea") {
+        else if (issue === "New exciting idea") {
             const idea = prompt("Enter your idea:");
-            if(idea) {
+            if (idea) {
                 ideaVault.push(idea);
                 updateVault();
                 solution.innerHTML =
@@ -193,23 +250,26 @@
             }
         }
 
-        else if(issue === "Stuck") {
+        else if (issue === "Stuck") {
             const step = prompt("What's one smaller next step?");
-            if(step) {
+            if (step) {
                 solution.innerHTML =
                     `<div class='task'>➡️ Next small step: ${step}</div>`;
             }
         }
 
-        else if(issue === "Low energy") {
+        else if (issue === "Low energy") {
             const easierTask = scheduledTasks.find(
-                t => t.effort === "Low" && t.name !== scheduledTasks[currentTaskIndex].name
+                task => task.effort === "Low"
             );
 
-            if(easierTask) {
-                document.getElementById("currentTask").innerText = easierTask.name;
+            if (easierTask) {
+                currentTaskIndex = scheduledTasks.indexOf(easierTask);
+                updateCurrentTask();
+                renderTasks();
+
                 solution.innerHTML =
-                    "<div class='task'>😴 Energy low. Switched to easier task.</div>";
+                    "<div class='task'>😴 Switched to a lower-effort task.</div>";
             } else {
                 solution.innerHTML =
                     "<div class='task'>No easier task available.</div>";
@@ -219,39 +279,13 @@
 
     function updateVault() {
         let html = "";
+
         ideaVault.forEach(idea => {
             html += `<div class="task vault">${idea}</div>`;
         });
+
         document.getElementById("ideaVault").innerHTML = html;
     }
-    function completeTask() {
-    if (scheduledTasks.length === 0) return;
-
-    scheduledTasks.splice(currentTaskIndex, 1);
-
-    if (scheduledTasks.length === 0) {
-        document.getElementById("currentTask").innerText = "🎉 All tasks completed!";
-        document.getElementById("taskList").innerHTML = "";
-        return;
-    }
-
-    renderTasks();
-    document.getElementById("currentTask").innerText =
-        scheduledTasks[currentTaskIndex].name;
-}
-
-    function nextTask() {
-    if (scheduledTasks.length === 0) return;
-
-    currentTaskIndex++;
-
-    if (currentTaskIndex >= scheduledTasks.length) {
-        currentTaskIndex = 0;
-    }
-
-    document.getElementById("currentTask").innerText =
-        scheduledTasks[currentTaskIndex].name;
-}
 </script>
 
 </body>
