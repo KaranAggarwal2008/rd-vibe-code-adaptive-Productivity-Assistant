@@ -224,6 +224,34 @@
         });
         document.getElementById("ideaVault").innerHTML = html;
     }
+    function completeTask() {
+    if (scheduledTasks.length === 0) return;
+
+    scheduledTasks.splice(currentTaskIndex, 1);
+
+    if (scheduledTasks.length === 0) {
+        document.getElementById("currentTask").innerText = "🎉 All tasks completed!";
+        document.getElementById("taskList").innerHTML = "";
+        return;
+    }
+
+    renderTasks();
+    document.getElementById("currentTask").innerText =
+        scheduledTasks[currentTaskIndex].name;
+}
+
+    function nextTask() {
+    if (scheduledTasks.length === 0) return;
+
+    currentTaskIndex++;
+
+    if (currentTaskIndex >= scheduledTasks.length) {
+        currentTaskIndex = 0;
+    }
+
+    document.getElementById("currentTask").innerText =
+        scheduledTasks[currentTaskIndex].name;
+}
 </script>
 
 </body>
